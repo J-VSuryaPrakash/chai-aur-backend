@@ -52,7 +52,7 @@ const app = express()
         throw err
     }
 } )()
-//  It isa best practice to put a semicolon before the IIFE - this is because before the line of code
+//  It is a best practice to put a semicolon before the IIFE - this is because before the line of code
 // we might not put a semicolon 
 
 

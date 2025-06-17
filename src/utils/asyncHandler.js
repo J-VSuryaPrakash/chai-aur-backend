@@ -12,6 +12,9 @@ export { asyncHandler }
 
 /*
 
+const asyncHandler = (func) => {() => {}}
+    
+// here we are trying to pass the function "func" further down the chain as a parameter
 
 const asyncHandler = (fn) => async (req, res, next) => {
     try {
@@ -25,6 +28,7 @@ const asyncHandler = (fn) => async (req, res, next) => {
 } 
 
 
-
+The catch block is the error handler that sends the status so that it becomes easier for the front-end person to handle
+message is also sent to the front-end to be displayed
 
 */

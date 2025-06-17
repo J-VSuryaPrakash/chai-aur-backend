@@ -19,7 +19,7 @@ app.use(express.static("public"))
 // if there are any assets like file or images we keep them in the public folder
 
 app.use(cookieParser())
-
+// Using the cookie parser i can access the users browser cookies or set the cookies in the users browser
 
 
 export { app }

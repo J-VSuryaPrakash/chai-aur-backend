@@ -22,4 +22,15 @@ app.use(cookieParser())
 // Using the cookie parser i can access the users browser cookies or set the cookies in the users browser
 
 
+// routes import
+
+import userRouter from "./routes/user.routes.js"
+
+// routes declaration
+
+// app.use("/users", userRouter)
+
+app.use("/api/v1/users",userRouter)
+
+
 export { app }

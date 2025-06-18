@@ -8,10 +8,10 @@ dotenv.config({
 })
 
 
-app.on("error",(error)=>{
-    console.error("Database connection FAILED",error)
-    process.exit(1)
-})
+app.on("error", (error) => {
+    console.error("Express server error:", error);
+    process.exit(1);
+});
 
 connectDB()
 .then(() =>{

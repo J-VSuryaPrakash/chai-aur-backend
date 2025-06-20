@@ -4,6 +4,25 @@ import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 
+const generateAccessAndRefreshToken = async(userId) => {
+    try {
+        
+        const user = await User.findById(userId)
+
+        const accessToken = user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
+
+        user.refreshToken = refreshToken
+
+        await user.save({ validateBeforeSave: false })
+
+        return {accessToken, refreshToken}
+
+    } catch (error) {
+        throw new ApiError(500,"Something went wrong while generating access and refresh token")
+    }
+}
+
 const registerUser = asyncHandler(async (req,res) => {
 
     /*
@@ -103,4 +122,97 @@ const registerUser = asyncHandler(async (req,res) => {
     )
 })
 
-export {registerUser}
+const loginUser = asyncHandler(async (req, res) => {
+    
+    /*
+        login todo steps
+
+        front-end data collection
+        validate the input data 
+        find user exists or not in db
+        if exists - username and password validate
+        if verified - send or grant the tokens
+        store the tokens on client machine
+    
+    */
+
+    const {username, email, password} = req.body
+
+    if(!(username || email)){
+        throw new ApiError(400,"username or email is required")
+    }
+
+    const user = await User.findOne({
+        $or: [{username},{email}]
+    })
+
+    if(!user){
+        throw new ApiError(404, "User does not exist")
+    }
+
+    const isPasswordValid = await user.isPasswordCorrect(password)
+
+    if(!isPasswordValid){
+        throw new ApiError(401,"Invalid user credentials")
+    }
+
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id)
+
+    // here it is upto us wether to chose a db call again or just make the updation within the object
+    // because the user here in this reference doesn't have the refreshtoken
+
+
+    const loggedInUser = await User.findOne(user._id).select("-password -refreshToken")
+
+    // by setting the options in this manner ensures that only server can modify them bcoz by default any one from 
+    // from front-end can modify them
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res.status(200)
+    .cookie("accessToken",accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    .json(new ApiResponse(200,
+        {
+            user: loggedInUser, accessToken,refreshToken
+        },
+        "User is logged in successfully"
+    ))
+
+})
+
+const logoutUser = asyncHandler(async (req,res) => {
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken : undefined
+            }
+        },
+        {
+            new: true
+        }
+    )
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    return res.stats(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged Out"))
+
+})
+
+// we logout the user - and we validate based on the tokens, reset the refresh token
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser
+}

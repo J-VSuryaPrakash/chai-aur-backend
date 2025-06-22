@@ -26,6 +26,9 @@ const generateAccessAndRefreshToken = async(userId) => {
 
 const registerUser = asyncHandler(async (req,res) => {
 
+    console.log("Request : ", req);
+    
+
     /*
         steps for registering user
 
@@ -69,7 +72,7 @@ const registerUser = asyncHandler(async (req,res) => {
     const existedUser = await User.findOne({
         $or: [{username}, {email}]
     })
-
+   
     if(existedUser){
         throw new ApiError(409,"User already exists")
     }
@@ -91,11 +94,18 @@ const registerUser = asyncHandler(async (req,res) => {
         throw new ApiError(400,"Avatar file is required")
     }
 
+    console.log("Request files : ", req.files);
+    
+
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
 //  I encountered a validation error since i have mentioned the coverImage field in the 
 //  schema as required 
+
+    console.log("Avatar: ",avatar);
+    console.log("Cover Image: ",coverImage);
+    
 
     if(!avatar){
         throw new ApiError(400,"Avatar file is required")
@@ -113,10 +123,13 @@ const registerUser = asyncHandler(async (req,res) => {
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
-
+// here the '-' indicate not include these fields in the response
     if(!createdUser){
         throw new ApiError(500,"Something went wrong while registering the user")
     }
+
+    console.log("Created User details: ", createdUser);
+    
 
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registered successfully")
@@ -187,6 +200,7 @@ const loginUser = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async (req,res) => {
+   
     await User.findByIdAndUpdate(
         req.user._id,
         {

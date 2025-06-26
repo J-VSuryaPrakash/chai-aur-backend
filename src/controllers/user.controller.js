@@ -237,17 +237,6 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401,"Unauthorized request")
     }
 
-    const decodedToken = jwt.verify(
-        incomingRefreshToken,
-        process.env.REFRESH_TOKEN_SECRET
-    )
-
-    const user = await User.findById(decodedToken?._id)
-
-    if(!user){
-        throw new ApiError(401,"Invalid refresh token")
-    }
-
     try {
 
         const decodedToken = jwt.verify(
@@ -288,6 +277,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         throw new ApiError(401, error?.message || "Invalid refresh token")
     }
 
+    // You're rotating the refresh token for security, and using refreshToken: newRefreshToken just keeps the response format clean and consistent.
+    // It avoids confusion on the frontend while still handling best practices behind the scenes.
+
 })
 
 // User updation controller
@@ -297,6 +289,11 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     const {oldPassword, newPassword} = req.body
 
     const user = await User.findById(req.user?._id)
+
+    if(!user){
+        throw new ApiError(400,"User not found")
+    }
+
     const isPasswordValid = await user.isPasswordCorrect(oldPassword)
 
     if(!isPasswordValid){
@@ -335,7 +332,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
                 email
             } 
         },
-        { new: true } // the new-true indicates to return the updated document
+        { new: true } // the {new: true} indicates to return the updated document
     ).select("-password -refreshToken")
 
     return res.status(200)
@@ -470,6 +467,8 @@ const getUserDetails = asyncHandler(async (req,res) => {
     .status(200)
     .json(new ApiResponse(200, channel[0], "User channel fetched successfully"))
 })
+
+// here channel[0] is sent because it is array of object
 
 const getWatchHistory = asyncHandler(async (req, res) => {
 
